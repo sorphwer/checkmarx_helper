@@ -1,4 +1,5 @@
 from selenium import webdriver
+import selenium
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -7,7 +8,7 @@ import time
 import openpyxl
 from common import cprint , init_dic_from_json,save_dic_as_json
 class CheckmarxDriver():
-    workqueue = {}
+    workqueue = []
     def __init__(self,
                 system_user:str,
                 chrome_driver_path:str = "chromedriver.exe",
@@ -23,8 +24,10 @@ class CheckmarxDriver():
         self.wait = WebDriverWait(self.driver, 10)
         if mode == 'Full-Screen':
             self.driver.maximize_window()
+
     def set_workqueue_cache_path(self,path='Checkmarx_web_workqueue.json'):
         self.cache_path = path
+        return self
     def init_workqueue_from_excel(self,
                                 PATH,
                                 url_index,
@@ -33,11 +36,11 @@ class CheckmarxDriver():
                                 sheet_name='checkmarx'):
         wb_obj = openpyxl.load_workbook(PATH)
         sheet = wb_obj[sheet_name]
-        self.workqueue = {}
         for i in range(2,len(sheet['A'])):
             if sheet[condition_index+str(i)].value == condition_value:
                 self.workqueue.append({'id':i,'url':sheet[url_index+str(i)].value,'isSet':False})
         save_dic_as_json(self.workqueue,self.cache_path)
+        return self
 
     def load_workqueue_from_json(self):
         self.workqueue = init_dic_from_json(self.cache_path)
@@ -45,8 +48,8 @@ class CheckmarxDriver():
     def sso_login(self,target_url):
         try:
             self.driver.get(target_url)
-            wait = WebDriverWait(self.driver, 10)
-            sso_login_btn = wait.until(EC.element_to_be_clickable((By.NAME,'providerid')))
+            # wait = WebDriverWait(self.driver, 10)
+            sso_login_btn = self.wait.until(EC.element_to_be_clickable((By.NAME,'providerid')))
             sso_login_btn.click()
             time.sleep(10)
             cprint('Login successfully','WEB')
@@ -55,9 +58,21 @@ class CheckmarxDriver():
             traceback.print_exc()
             cprint('Login failed','WEB')
             return False
+    def exec_get_code_html(self,url):
+        try:
+            if self.sso_login(url):
+                iframe = self.wait.until(EC.presence_of_element_located((By.ID,"codeFrame")))
+                self.driver.switch_to.frame(iframe)
 
+                code_div = self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,'div.CodeMirror-lines > div >div.CodeMirror-code')))
 
-    def set_status(self,status):
+                return code_div
+
+        except:
+            traceback.print_exc()
+
+    def set_status(self,url,status):
+        self.driver.get(url)
         try:
             iframe = self.wait.until(EC.presence_of_element_located((By.ID,"gridFrame")))
             
@@ -84,14 +99,13 @@ class CheckmarxDriver():
             if self.sso_login(self.workqueue[0]['url']):
                 for i in range(0,len(self.workqueue)):
                     if not self.workqueue[i]['isSet']:
-                        print('Checking ',i ,'/', len(self.workqueue))
+                        print('Checking ',i+1 ,'/', len(self.workqueue))
                         if self.set_status(self.workqueue[i]['url'],change_to):
                             self.workqueue[i]['isSet'] = True
                             save_dic_as_json(self.workqueue,self.cache_path)
 
         except:
-            print(traceback)
-            print('Got Error, it might be that the memory is running out')
+            traceback.print_exc()
             self.driver.close()
     def logout(self):
         self.driver.close()

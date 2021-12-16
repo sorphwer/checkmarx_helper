@@ -3,4 +3,5 @@ __pycache__
 *.xlsx
 *.csv
 *.json
+*.html
 raw/**
