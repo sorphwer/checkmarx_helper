@@ -3,5 +3,7 @@ __pycache__
 *.xlsx
 *.csv
 *.json
+*.ipynb
 *.html
+*.exe
 raw/**
