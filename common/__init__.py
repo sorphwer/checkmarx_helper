@@ -17,7 +17,7 @@ def init_dic_from_json(PATH):
 def save_dic_as_json(dic,PATH,indent=4):
     try:
         with open(PATH,'w') as w:
-            w.write(json.dumps(dic,indent=indent))
+            w.write(json.dumps(dic,indent=indent,default=str))
         cprint('cache json file is saved','JSON',str(PATH))
         return True
     except:
@@ -89,8 +89,8 @@ class DBBuilder():
         
         context = {
                 **row,
-                'SrcCode' : [row['Line'],self._get_code_line(row['SrcFilePath'],row['Line'])],
-                'DestCode': [row['DestLine'],self._get_code_line(row['DestFilePath'],row['DestLine'])]
+                'SrcCode' : [row['Line'],self._get_code_line(row)],
+                'DestCode': [row['DestLine'],self._get_code_line(row)]
         }
         if row['SrcFileName'] in self.db:
             self.db[row['SrcFileName']]['list'].append(context)
@@ -102,13 +102,15 @@ class DBBuilder():
     '''
     Return n-th line of a file
     '''
-    def _get_code_line(self,path,N):
+    def _get_code_line(self,row):
+        path = row['SrcFilePath']
+        N = row['Line']
         try:
             with open(path,mode='r',encoding='UTF-8') as f:
                 head = [next(f) for x in range(N)]
             return head[-1].strip().replace('\n','')
         except:
-            return 'N/A'
+            return row['Link']
 
     def _split_chunks(self,db_key):
         def _init_link(L):

@@ -152,11 +152,37 @@ class WorkShell(cmd.Cmd):
 
     def _set_comment_template(self,id,type):
         current_chunk = self._get_current_chunk()
-        if type.lower() == 'fp':
+        if type.lower() == 'fp5':
             for i in current_chunk:
                 if i['#'] == id:
                     i['Comment'] = 'There is no logical relationship between the data flow provided by Checkmarx.'
                     i['Status'] = 'False Positive'
+        elif type.lower() == 'fp1':
+            for i in current_chunk:
+                if i['#'] == id:
+                    i['Comment'] = f'The global filterring method has been used , or there are other filtering methods, but it is not recognized by checkmarx'
+                    i['Status'] = 'False Positive'
+        elif type.lower() == 'fp2':
+            for i in current_chunk:
+                if i['#'] == id:
+                    i['Comment'] = 'The input has been restricted on characters, such as length, character type, etc., but it is not recognized by checkmarx.'
+                    i['Status'] = 'False Positive'
+        elif type.lower() == 'fp3':
+            for i in current_chunk:
+                if i['#'] == id:
+                    i['Comment'] = 'The input comes from a trusted source, such as constantsor variables that are not input by the user, but it is not recognized by checkmarx.'
+                    i['Status'] = 'False Positive'
+        elif type.lower() == 'fp4':
+            for i in current_chunk:
+                if i['#'] == id:
+                    i['Comment'] = 'The output will not cause vulnerabilities, but the tool misreports the vulnerabilities.'
+                    i['Status'] = 'False Positive'
+        elif type.lower() == 'fp6':
+            for i in current_chunk:
+                if i['#'] == id:
+                    i['Comment'] = 'The judgment of other tools is wrong.'
+                    i['Status'] = 'False Positive'
+
         elif type.lower() =='sqlformat':
             for i in current_chunk:
                 if i['#'] == id:
@@ -173,6 +199,8 @@ class WorkShell(cmd.Cmd):
                 if i['#'] == id:
                     i['Status'] = 'Pending Further Information'
                     i['Comment'] = f"Through the code snippet provided by Checkmarx, we know that the application deserializes  an object which is a FileStream read from a file at line {i['Line']} of {i['SrcFileName']}. However, we are not aware that whether the file is user controlled, thus we could not consider the status of the vulnerability to be Open."
+                    
+        
     #edit interface
     def _edit_current_chunk(self):
         cprint('Node ' +str(self._current_node_index+1) +'/'+str(len(self.db)))
@@ -225,7 +253,7 @@ class WorkShell(cmd.Cmd):
 
     def do_EOF(self, line):
         with open(self.CACHE_PATH,'w') as w:
-            w.write(json.dumps(self.db,indent=4))
+            w.write(json.dumps(self.db,indent=4,default=str))
         print('json file is saved.')
         return True
     
@@ -307,30 +335,30 @@ class WorkShell(cmd.Cmd):
         else:
             try:
                 args = line.split(' ')
-                if '-m' in args:
+                if '-m' in args:#add custom comment, set as Open
                     self._set_open_comment(int(args[0]),' '.join(args[args.index('-m')+1:]))
                     self.do_edit(None)
-                elif '-fp' in args:
+                elif '-fp' in args:#add custom comment, set as FP
                     self._set_fp_comment(int(args[0]),' '.join(args[args.index('-fp')+1:]))
                     self.do_edit(None)
-                elif '-pending' in args:
+                elif '-pending' in args:#add template comment, set as Pending
                     self._set_pending_comment(int(args[0]),' '.join(args[args.index('-pending')+1:]))
                     self.do_edit(None)
                     
-                elif '-r' in args:
+                elif '-r' in args:#Remove comment, set as None
                     self._remove_comment(int(args[0]))
                     self.do_edit(None)
-                elif '-t' in args:
+                elif '-t' in args:#add template comment, set corresponding status
                     self._set_comment_template(int(args[0]),args[args.index('-t')+1])
                     self.do_edit(None)
                     
-                elif '-a' in args:
+                elif '-a' in args:#append custom comment, keep status
                     self._add_comment(int(args[0]),' '.join(args[args.index('-a')+1:]))
                     self.do_edit(None)
-                elif '-ref' in args:
+                elif '-ref' in args:#add reference comment
                     self._set_reference(int(args[0]),args[args.index('-ref')+1])
                     self.do_edit(None)
-                elif '-deref' in args:
+                elif '-deref' in args:#delete reference comment
                     self._detach_reference(int(args[0]))
                     self.do_edit(None)
                     
@@ -368,11 +396,11 @@ class WorkShell(cmd.Cmd):
         
     def do_save(self,line):
         with open(self.CACHE_PATH,'w') as w:
-            w.write(json.dumps(self.db,indent=4))
+            w.write(json.dumps(self.db,indent=4,default=str))
         cprint('json file is saved.','SHELL',self.CACHE_PATH)
 
         
     def __del__(self):
         with open(self.CACHE_PATH,'w') as w:
-            w.write(json.dumps(self.db,indent=4))
+            w.write(json.dumps(self.db,indent=4,default=str))
         cprint('json file is saved.','SHELL',self.CACHE_PATH)
