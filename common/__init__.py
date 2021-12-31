@@ -3,6 +3,7 @@ import time
 from collections import defaultdict
 import openpyxl
 import traceback
+import csv
 def init_dic_from_json(PATH):
     try:
         with open(PATH,'r') as r:
@@ -31,6 +32,8 @@ def cprint(content,module='DEBUG',*args):
     else:
         print('\033[1;32;43m ['+module+'] \033[0m '+ content + time.strftime(" |%Y-%m-%d %H:%M:%S|", time.localtime()))
 
+def cstr(s):
+    return '' if s is None else str(s)
 '''
 INPUT:
     xxx.Web/xxx/xxx.Com/aaa.cs
@@ -50,6 +53,15 @@ def get_file_name(path):
         else:
             raise ValueError('path is None')
             return -1
+
+def checkmarx_csv_to_excel(filepath):
+    with open(filepath, newline='') as csvfile:
+        # reader = csv.reader(csvfile, delimiter=' ', quotechar='|')
+        reader = csv.reader(csvfile)
+        # for row in reader:
+            
+
+
 class DBBuilder():
 
     db = defaultdict(dict)

@@ -4,7 +4,8 @@ import cmd
 import json
 import os
 from IPython import get_ipython
-from common import DBBuilder,cprint
+from common import DBBuilder,cprint,cstr
+import openpyxl
 
 '''
 Usage 1: WorkShell(db:dictionary,PATH:string)
@@ -66,6 +67,10 @@ class WorkShell(cmd.Cmd):
         except NameError:
             return False      # Probably standard Python interpreter
 
+    def check_str(s):
+        if s == None:
+            return ""
+    
     def _clear_console(self):
         if self.is_notebook:
             from IPython.display import clear_output
@@ -150,8 +155,18 @@ class WorkShell(cmd.Cmd):
                 i['Status'] = ''
 
 
-    def _set_comment_template(self,id,type):
+    def _set_comment_template(self,id,type,filename = 'Src', line = None):
         current_chunk = self._get_current_chunk()
+        for i in current_chunk:
+            if i['#'] == id:
+                if filename == 'Dest':
+                    filename = i['DestFileName']
+                else:
+                    filename = i['SrcFileName']
+                if not line:
+                    line = i['Line']
+         
+            
         if type.lower() == 'fp5':
             for i in current_chunk:
                 if i['#'] == id:
@@ -188,23 +203,23 @@ class WorkShell(cmd.Cmd):
                 if i['#'] == id:
 #                     i['Comment'] = f"The application uses 'String.format' to embed untrusted params and construct sql queries, and executes queries in the function '{ExecuteScalar}' at line {508} of {Unisoft.Library/Unisoft.Net.Common/Helper/SQLHelper.cs}, which may cause sql injection attacks. Moreover, we observed that each time before executing queries, '{ExecuteScalar}' will call the function '{PrepareCommand}' at line 842 of Unisoft.Library/Unisoft.Net.Common/Helper/SQLHelper.cs to prepare sql query strings. We recommend to add sql injection prevention methods into the function '{PrepareCommand}' such as Prepared Statement, Input Validation Check, Sanitization, instead of string concatenation. "
                     i['Status'] = 'Open'
-                    i['Comment'] = f"The application uses 'String.format' to embed untrusted params and construct sql queries at line {i['Line']} of {i['SrcFileName']}, which may cause sql injection attacks."
+                    i['Comment'] = f"The application uses 'String.format' to embed untrusted params and construct sql queries at line {line} of {filename}, which may cause sql injection attacks."
         elif type.lower() == "sql+":
             for i in current_chunk:
                 if i['#'] == id:
                     i['Status'] = 'Open'
-                    i['Comment'] = f"The application uses string concatenation to embed untrusted params and construct sql queries at line {i['Line']} of {i['SrcFileName']}, which may cause sql injection attacks."
+                    i['Comment'] = f"The application uses string concatenation to embed untrusted params and construct sql queries at line {line} of {filename}, which may cause sql injection attacks."
         elif type.lower() == "pending":
             for i in current_chunk:
                 if i['#'] == id:
                     i['Status'] = 'Pending Further Information'
-                    i['Comment'] = f"Through the code snippet provided by Checkmarx, we know that the application deserializes  an object which is a FileStream read from a file at line {i['Line']} of {i['SrcFileName']}. However, we are not aware that whether the file is user controlled, thus we could not consider the status of the vulnerability to be Open."
+                    i['Comment'] = f"Through the code snippet provided by Checkmarx, we know that the application deserializes  an object which is a FileStream read from a file at line {line} of {filename}. However, we are not aware that whether the file is user controlled, thus we could not consider the status of the vulnerability to be Open."
                     
         
     #edit interface
     def _edit_current_chunk(self):
-        cprint('Node ' +str(self._current_node_index+1) +'/'+str(len(self.db)))
-        cprint('Chunk '+str(self._current_chunk_index+1)+'/'+str(len(self.db[self.db_index_list[ self._current_node_index]])))
+        cprint('Node ' +str(self._current_node_index+1) +'/'+str(len(self.db)),'SHELL')
+        cprint('Chunk '+str(self._current_chunk_index+1)+'/'+str(len(self.db[self.db_index_list[ self._current_node_index]])),'SHELL')
         current_chunk = self._get_current_chunk()
         #Print basic info of this chunk
         print(current_chunk[0]["SrcFileName"],'--->',current_chunk[0]["DestFileName"])
@@ -213,9 +228,9 @@ class WorkShell(cmd.Cmd):
 #         print(current_chunk)
         for i in current_chunk:
             if 'reference' in i:
-                interface_dic[int(i['reference'])][0] += ( '-' + str(i['#']))
+                interface_dic[int(i['reference'])][0] += ( '-' + cstr(i['#']))
             else:
-                interface_dic[int(i['#'])] = [str(i['#']),"["+str(i['Line'])+"]"+i['SrcCode'][1], "["+str(i['DestLine'])+"]"+i['DestCode'][1]]
+                interface_dic[int(i['#'])] = [cstr(i['#']),"["+cstr(i['Line'])+"]"+cstr(i['SrcCode'][1]), "["+cstr(i['DestLine'])+"]"+cstr(i['DestCode'][1])]
 
                 
 #         for key in interface_dic.keys():
@@ -332,6 +347,7 @@ class WorkShell(cmd.Cmd):
     def do_comment(self,line):
         if not line:
             print('[comment]: comment <id> -m <message>/ -r / -t <template>')
+            print('Example: c 123 -t sqlformat -l 300 -df')
         else:
             try:
                 args = line.split(' ')
@@ -349,8 +365,17 @@ class WorkShell(cmd.Cmd):
                     self._remove_comment(int(args[0]))
                     self.do_edit(None)
                 elif '-t' in args:#add template comment, set corresponding status
-                    self._set_comment_template(int(args[0]),args[args.index('-t')+1])
+                    mode = 'Src'
+                    line = None
+                    if '-df' in args:
+                        mode = 'Dest'
+                    if '-sf' in args:
+                        mode = 'Src'
+                    if '-l' in args:
+                        line = args[args.index('-l')+1]
+                    self._set_comment_template(int(args[0]),args[args.index('-t')+1],mode,line)
                     self.do_edit(None)
+                    
                     
                 elif '-a' in args:#append custom comment, keep status
                     self._add_comment(int(args[0]),' '.join(args[args.index('-a')+1:]))
@@ -404,3 +429,34 @@ class WorkShell(cmd.Cmd):
         with open(self.CACHE_PATH,'w') as w:
             w.write(json.dumps(self.db,indent=4,default=str))
         cprint('json file is saved.','SHELL',self.CACHE_PATH)
+
+
+    def do_export(self,line):
+        if not line:
+            REPORT_EXCEL_PATH = self.CACHE_PATH.split('.')[0]+'.xlsx'
+        else:
+            if '.xlsx' in line:
+                REPORT_EXCEL_PATH = line
+            else:
+                REPORT_EXCEL_PATH = line + '.xlsx'
+        wb_obj = openpyxl.load_workbook(REPORT_EXCEL_PATH)
+        sheet = wb_obj['checkmarx']
+        for node_key in self.db.keys():
+            for chunk_key in self.db[node_key].keys():
+                sublist = self.db[node_key][chunk_key]
+                for i in sublist:
+                    sheet['AF'+str(i['#']+1)].value = i['Comment']
+                    if not 'reference' in i:
+                        sheet['AB'+str(i['#']+1)].value = i['Status']
+
+        for node_key in self.db.keys():
+            for chunk_key in self.db[node_key].keys():
+                sublist = self.db[node_key][chunk_key]
+                for i in sublist:
+                    if  'reference' in i:
+                        sheet['AB'+str(i['#']+1)].value = sheet['AB'+str(i['reference']+1)].value
+                        #override comments col to fix bug
+                        reference = str(i['reference'])
+                        sheet['AF'+str(i['#']+1)].value = f'As the code triggers this issue and the remediation is the same, please refer to #{reference}'   
+        wb_obj.save(REPORT_EXCEL_PATH)
+        cprint('DB saved into'+REPORT_EXCEL_PATH,'SHELL')

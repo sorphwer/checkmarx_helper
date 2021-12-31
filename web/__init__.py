@@ -21,7 +21,7 @@ class CheckmarxDriver():
             options.add_argument('--headless')
 
         self.driver = webdriver.Chrome(executable_path=chrome_driver_path,options=options)
-        self.wait = WebDriverWait(self.driver, 10)
+        self.wait = WebDriverWait(self.driver, 15)
         if mode == 'Full-Screen':
             self.driver.maximize_window()
 
@@ -49,11 +49,20 @@ class CheckmarxDriver():
         try:
             self.driver.get(target_url)
             # wait = WebDriverWait(self.driver, 10)
+            # sso_login_btn = self.wait.until(EC.element_to_be_clickable((By.XPATH,"//button[text()='Azure']")))
+            
             sso_login_btn = self.wait.until(EC.element_to_be_clickable((By.NAME,'providerid')))
+            self.driver.execute_script("document.body.style.zoom='1'") #Adjust zoom into 100% or click() won't work
+            # print('Login button clicked',sso_login_btn.get_attribute("outerHTML"))
             sso_login_btn.click()
-            time.sleep(10)
-            cprint('Login successfully','WEB')
-            return True
+            
+            # time.sleep(4)
+            iframe = self.wait.until(EC.presence_of_element_located((By.ID,"codeFrame")))
+            if iframe:
+                cprint('Login successfully','WEB')
+                return True
+            else:
+                return False
         except:
             traceback.print_exc()
             cprint('Login failed','WEB')
@@ -73,21 +82,24 @@ class CheckmarxDriver():
 
     def set_status(self,url,status):
         self.driver.get(url)
+        time.sleep(5)
         try:
             iframe = self.wait.until(EC.presence_of_element_located((By.ID,"gridFrame")))
-            
+            self.driver.execute_script("document.body.style.zoom='1'") #Adjust zoom into 100% or click() won't work
             self.driver.switch_to.frame(iframe)
 
             checkbox = self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,'tr.rgSelectedRow > td:first-child > span > input')))
             checkbox.click()
-            time.sleep(1)
+            # print('click checkbox',checkbox.get_attribute("outerHTML"))
 
             menu = self.driver.find_element_by_css_selector('a.rtbExpandDown')
             menu.click()
-            time.sleep(0.5)
-            not_exploitable_item = self.driver.find_element_by_xpath(f"//span[text()='{status}']/..")
+            # print('click dropdown',menu.get_attribute("outerHTML"))
+            # not_exploitable_item = self.driver.find_element_by_xpath(f"//span[text()='{status}']/..")
+            not_exploitable_item = self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR,'ul.rtbActive > li:nth-child(2) > a')))
             not_exploitable_item.click()
-            time.sleep(5)
+            # print('click set as status',not_exploitable_item.get_attribute("outerHTML"))
+            time.sleep(4)
             cprint(f'Set as {status} successfully','WEB')
             return True
         except:
@@ -103,10 +115,13 @@ class CheckmarxDriver():
                         if self.set_status(self.workqueue[i]['url'],change_to):
                             self.workqueue[i]['isSet'] = True
                             save_dic_as_json(self.workqueue,self.cache_path)
+            else:
+                self.driver.quit()
 
         except:
             traceback.print_exc()
-            self.driver.close()
+            self.driver.quit()
+            # self.exec_workqueue(change_to)
     def logout(self):
         self.driver.close()
     def __del__(self):
