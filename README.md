@@ -40,19 +40,19 @@ WorkShell(project_name='supply-ors-pu').cmdloop()
 
 | Command                      | Arguments               | Discription                                                  | Example            |
 | ---------------------------- | ----------------------- | ------------------------------------------------------------ | ------------------ |
-| e/edit <Node id>  <Chunk id> |                         | Jump to target node and target chunk                         | e 1 1              |
-| nc/nextchunk                 |                         | jump to next chunk                                           | nc                 |
-| lc/lastchunk                 |                         | jump to last chunk                                           | lc                 |
-| nn/nextnode                  |                         | jump to next node                                            | nn                 |
-| ln/lastnode                  |                         | jump to last node                                            | ln                 |
+| e/edit <Node id>  <Chunk id> | N/A                     | Jump to target node and target chunk                         | e 1 1              |
+| nc/nextchunk                 | N/A                     | jump to next chunk                                           | nc                 |
+| lc/lastchunk                 | N/A                     | jump to last chunk                                           | lc                 |
+| nn/nextnode                  | N/A                     | jump to next node                                            | nn                 |
+| ln/lastnode                  | N/A                     | jump to last node                                            | ln                 |
 | c/comment <record id>        | -m <message>            | Manually add comments, and set status as **Open**            | c 12 -m comments   |
-|                              | -fp <message>           | Manually add comments, and set status as **False Positive**  | c 12 -fp comments  |
-|                              | -t <template>           | See appendix below                                           | c 12 -t sql+       |
-|                              | -a                      | Add extra comments.                                          | c 12 -a comments   |
-|                              | -ref <target record id> | Add comments: `As the code triggers this issue and the remediation is the same, please refer to #<target record id>`, and link this reocrd to target record. | c 12 -ref 13       |
-|                              | -deref                  | cancle the operation of `-ref`                               | c 12 -deref        |
-| merge                        |                         | automatically use `-ref` for every record in this node, checking the `line` attribution. | merge              |
-| export <xlsx path>           |                         | Transmit all changes in json file into xlsx report. This operation effects **AB** and **AF** columns, which is **Status** and **Comments** | export report.xlsx |
+| N/A                          | -fp <message>           | Manually add comments, and set status as **False Positive**  | c 12 -fp comments  |
+| N/A                          | -t <template>           | See appendix below                                           | c 12 -t sql+       |
+| N/A                          | -a                      | Add extra comments.                                          | c 12 -a comments   |
+| N/A                          | -ref <target record id> | Add comments: `As the code triggers this issue and the remediation is the same, please refer to #<target record id>`, and link this reocrd to target record. | c 12 -ref 13       |
+| N/A                          | -deref                  | cancle the operation of `-ref`                               | c 12 -deref        |
+| merge                        | N/A                     | automatically use `-ref` for every record in this node, checking the `line` attribution. | merge              |
+| export <xlsx path>           | N/A                     | Transmit all changes in json file into xlsx report. This operation effects **AB** and **AF** columns, which is **Status** and **Comments** | export report.xlsx |
 
 When using `-t` commands:
 
