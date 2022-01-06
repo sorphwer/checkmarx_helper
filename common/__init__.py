@@ -105,6 +105,8 @@ class DBBuilder():
                 'DestCode': [row['DestLine'],self._get_code_line(row)]
         }
         if row['SrcFileName'] in self.db:
+#             print(self.db[row['SrcFileName']]['list'])
+#             print(self.db)
             self.db[row['SrcFileName']]['list'].append(context)
         else:
             self.db[row['SrcFileName']]['list'] = []

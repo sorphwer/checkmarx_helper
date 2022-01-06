@@ -185,7 +185,7 @@ class WorkShell(cmd.Cmd):
         elif type.lower() == 'fp3':
             for i in current_chunk:
                 if i['#'] == id:
-                    i['Comment'] = 'The input comes from a trusted source, such as constantsor variables that are not input by the user, but it is not recognized by checkmarx.'
+                    i['Comment'] = 'The input comes from a trusted source, such as constants or variables that are not input by the user, but it is not recognized by checkmarx.'
                     i['Status'] = 'False Positive'
         elif type.lower() == 'fp4':
             for i in current_chunk:
