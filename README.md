@@ -1,7 +1,7 @@
 # checkmarx_workspace
 A toolkit for code audit in checkmarx platform, including web app simulation, work shell and much more.
 
-There are three modules in this toolkit:
+Please keep it in mind that this is the 'minimal functional prototype', there are known issues in this repo, and the overall architexture may change in future versions. If you face any problem, trace the update roadmap , rise an issue here , or simply read and modify the source code.
 
 ## Quick Start
 
