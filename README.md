@@ -162,6 +162,7 @@ Here are known  issues we will fix in later update.
 2. Chrome might not be able to continue loading pages due to memory issue. Try restart script.
 3. When using `e` the chunk index will not be reset as `1` ,  which will raise out of range issue. 
 4. Make sure you have correct zoom in chrome using script, or the login may fail.
+5. Missing last row of xlsx file
 
 ## Roadmaps
 
