@@ -158,10 +158,11 @@ Notes: This operation will load your **chrome** user data in your computer. Make
 
 Here are known  issues we will fix in later update.
 
-1. Sometimes an error ''append' method can not be implemented in dic format will raise. Try restart your jupyter, delete any json file created.
-2. Chrome might not be able to continue loading pages due to memory issue. Try restart script.
-3. When using `e` the chunk index will not be reset as `1` ,  which will raise out of range issue. 
-4. Make sure you have correct zoom in chrome using script, or the login may fail.
+1. [LOW] Sometimes an error ''append' method can not be implemented in dic format will raise. Try restart your jupyter, delete any json file created.
+2. [LOW] Chrome might not be able to continue loading pages due to memory issue. Try restart script.
+3. [MEDIUM] When using `e` the chunk index will not be reset as `1` ,  which will raise out of range issue. **You may lose content after last saving**
+4. [LOW] Make sure you have correct zoom in chrome using script, or the login may fail.
+4. **[HIGH]** If set 'reference' pointing to same record, an error will appear during **export** procedure, **you may lose all content in this node and in every following nodes.**
 
 ## Roadmaps
 

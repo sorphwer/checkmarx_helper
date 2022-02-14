@@ -90,15 +90,14 @@ class CheckmarxDriver():
 
             checkbox = self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,'tr.rgSelectedRow > td:first-child > span > input')))
             checkbox.click()
-            # print('click checkbox',checkbox.get_attribute("outerHTML"))
+
 
             menu = self.driver.find_element_by_css_selector('a.rtbExpandDown')
             menu.click()
-            # print('click dropdown',menu.get_attribute("outerHTML"))
-            # not_exploitable_item = self.driver.find_element_by_xpath(f"//span[text()='{status}']/..")
+
             not_exploitable_item = self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR,'ul.rtbActive > li:nth-child(2) > a')))
             not_exploitable_item.click()
-            # print('click set as status',not_exploitable_item.get_attribute("outerHTML"))
+
             time.sleep(4)
             cprint(f'Set as {status} successfully','WEB')
             return True

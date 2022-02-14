@@ -172,7 +172,7 @@ class DBBuilder():
         wb_obj = openpyxl.load_workbook(PATH)
         sheet = wb_obj[sheet_name]
         #First init
-        for i in range(2,len(sheet['A'])):
+        for i in range(2,len(sheet['A'])+1):
             #Init ID
             sheet[index_col+str(i)].value = i-1
 

@@ -105,12 +105,16 @@ class WorkShell(cmd.Cmd):
         return self._get_current_node()
 
     def _set_reference(self,id,target_id):
+        if id == target_id:
+            print("Cannot set self reference")
+            return False
         current_chunk = self._get_current_chunk()
         for i in current_chunk:
             if i['#'] == id:
                 i['Comment'] =f'As the code triggers this issue and the remediation is the same, please refer to #{str(target_id)}'
                 i['Status'] = None
                 i['reference'] = int(target_id)
+        return True
                 
     def _detach_reference(self,id):
         current_chunk = self._get_current_chunk()
@@ -320,6 +324,7 @@ class WorkShell(cmd.Cmd):
             print('This is the last node')
         else:
             self._current_node_index += 1
+#             self._current_chunk_index = 0 #first chunk of next node
             self.do_edit(None)
             
     def do_lastnode(self,line):

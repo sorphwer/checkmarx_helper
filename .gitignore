@@ -7,3 +7,5 @@ __pycache__
 *.html
 *.exe
 raw/**
+*.pdf
+*.jpg
