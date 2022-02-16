@@ -1,6 +1,7 @@
 from selenium import webdriver
 import selenium
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import traceback  
@@ -28,31 +29,19 @@ class CheckmarxDriver():
     def set_workqueue_cache_path(self,path='Checkmarx_web_workqueue.json'):
         self.cache_path = path
         return self
-    # def init_workqueue_from_excel(self,
-    #                             PATH,
-    #                             url_index,
-    #                             condition_index,
-    #                             condition_value = 'False Positive',
-    #                             sheet_name='checkmarx'):
-    #     wb_obj = openpyxl.load_workbook(PATH)
-    #     sheet = wb_obj[sheet_name]
-    #     for i in range(2,len(sheet['A'])):
-    #         if sheet[condition_index+str(i)].value == condition_value:
-    #             self.workqueue.append({'id':i,'url':sheet[url_index+str(i)].value,'isSet':False})
-    #     save_dic_as_json(self.workqueue,self.cache_path)
-    #     return self
-    
-    #New Method
+
     def init_workqueue_from_excel(self,
                                     PATH,
                                     url_index,
                                     comment_index,
                                     status_index,
+                                    id_index = 'B',
                                     sheet_name='checkmarx'):
         wb_obj = openpyxl.load_workbook(PATH)
         sheet = wb_obj[sheet_name]
         for i in range(2,len(sheet['A'])):
-            self.workqueue.append({'id':i,
+            self.workqueue.append({'index':i,
+                                    'id':sheet[id_index+str(i)].value,
                                     'url':sheet[url_index+str(i)].value,
                                     'status':sheet[status_index+str(i)].value,
                                     'comment':sheet[comment_index+str(i)].value,
@@ -65,15 +54,12 @@ class CheckmarxDriver():
     def sso_login(self,target_url):
         try:
             self.driver.get(target_url)
-            # wait = WebDriverWait(self.driver, 10)
-            # sso_login_btn = self.wait.until(EC.element_to_be_clickable((By.XPATH,"//button[text()='Azure']")))
-            
+
             sso_login_btn = self.wait.until(EC.element_to_be_clickable((By.NAME,'providerid')))
             self.driver.execute_script("document.body.style.zoom='1'") #Adjust zoom into 100% or click() won't work
-            # print('Login button clicked',sso_login_btn.get_attribute("outerHTML"))
+
             sso_login_btn.click()
-            
-            # time.sleep(4)
+
             iframe = self.wait.until(EC.presence_of_element_located((By.ID,"codeFrame")))
             if iframe:
                 cprint('Login successfully','WEB')
@@ -97,37 +83,15 @@ class CheckmarxDriver():
         except:
             traceback.print_exc()
 
-    # def set_status(self,url,status):
-    #     self.driver.get(url)
-    #     time.sleep(5)
-    #     try:
-    #         iframe = self.wait.until(EC.presence_of_element_located((By.ID,"gridFrame")))
-    #         self.driver.execute_script("document.body.style.zoom='1'") #Adjust zoom into 100% or click() won't work
-    #         self.driver.switch_to.frame(iframe)
-    #         checkbox = self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,'tr.rgSelectedRow > td:first-child > span > input')))
-    #         checkbox.click()
-    #         menu = self.driver.find_element_by_css_selector('a.rtbExpandDown')
-    #         menu.click()
-    #         not_exploitable_item = self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR,'ul.rtbActive > li:nth-child(2) > a')))
-    #         not_exploitable_item.click()
-    #         time.sleep(4)
-    #         cprint(f'Set as {status} successfully','WEB')
-    #         return True
-    #     except:
-    #         traceback.print_exc()
-    #         cprint(f'Set as {status} failed','WEB')
-    #         return False
-
-    #New Method
     def set_status(self,workqueue_unit):
-        if not workqueue_unit.comment:
+        if not workqueue_unit['comment']:
             return False
         else:
-            self.driver.get(workqueue_unit.url)
-            time.sleep(5)
+            self.driver.get(workqueue_unit['url'])
+            time.sleep(2)
             try:
                 #Set as Not exploitable
-                if workqueue_unit.status == 'False Positive':
+                if workqueue_unit['status'] == 'False Positive':
                     iframe = self.wait.until(EC.presence_of_element_located((By.ID,"gridFrame")))
                     self.driver.execute_script("document.body.style.zoom='1'") #Adjust zoom into 100% or click() won't work
                     self.driver.switch_to.frame(iframe)
@@ -138,7 +102,7 @@ class CheckmarxDriver():
                     not_exploitable_item = self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR,'ul.rtbActive > li:nth-child(2) > a')))
                     not_exploitable_item.click()
                     time.sleep(4)
-                elif workqueue_unit.status == 'Open':
+                elif workqueue_unit['status'] == 'Open':
                     iframe = self.wait.until(EC.presence_of_element_located((By.ID,"gridFrame")))
                     self.driver.execute_script("document.body.style.zoom='1'") #Adjust zoom into 100% or click() won't work
                     self.driver.switch_to.frame(iframe)
@@ -149,38 +113,51 @@ class CheckmarxDriver():
                     not_exploitable_item = self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR,'ul.rtbActive > li:nth-child(3) > a')))
                     not_exploitable_item.click()
                     time.sleep(4)
-                elif  workqueue_unit.status == 'Pending':
+                elif  workqueue_unit['status'] == 'Pending':
                     pass
                 else:
                     cprint('Unknown status, must be "False Positive","Open" or "Pending')
                     raise
                 #Input comment into checkmarx
+                
                 iframe = self.wait.until(EC.presence_of_element_located((By.ID,"gridFrame")))
                 self.driver.execute_script("document.body.style.zoom='1'") #Adjust zoom into 100% or click() won't work
                 self.driver.switch_to.frame(iframe)
+
                 img = self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,'tr.rgSelectedRow > td:last-child > div > img')))
                 img.click()
-                textarea = self.wait.until(EC.presence_of_element_located((By.NAME,'wndCmmt_C_txtCmmt')))
-                textarea.sendKeys(workqueue_unit.comment)
 
-                btn = self.wait.until(EC.presence_of_all_elements_located((By.ID,'wndCmmt_C_btnCancel_input')))
-                # btn = self.wait.until(EC.presence_of_all_elements_located((By.ID,'wndCmmt_C_btnSave_input')))
-                btn.click()
+                comment = workqueue_unit['comment'].replace('"',"'")
+                js = 'let ta = document.getElementById("wndCmmt_C_txtCmmt");ta.value = "'+comment +'"'
+                print(js)
+                time.sleep(3)
+                self.driver.execute_script(js)
+
+                # textarea = self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,'textarea#wndCmmt_C_txtCmmt')))
+                # textarea.send_keys(workqueue_unit['comment']
+
+                time.sleep(3)
+
+                # btn = self.wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR,'span#wndCmmt_C_btnCancel')))
+                btn = self.wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR,'span#wndCmmt_C_btnSave')))
+                
+                btn[0].click()
                 time.sleep(1)
             except:
                 traceback.print_exc()
-                cprint(f'Set as {workqueue_unit.status} failed','WEB')
+                status = workqueue_unit['status']
+                cprint(f'Set as {status} failed','WEB')
                 return False
 
             
     #New Method
-    def exec_workqueue(self,change_to='Not Exploitable'):
+    def exec_workqueue(self):
         try:
             if self.sso_login(self.workqueue[0]['url']):
                 for i in range(0,len(self.workqueue)):
                     if not self.workqueue[i]['isSet']:
                         print('Checking ',i+1 ,'/', len(self.workqueue))
-                        if self.set_status_and_comment(self.workqueue[i]):
+                        if self.set_status(self.workqueue[i]):
                             self.workqueue[i]['isSet'] = True
                             save_dic_as_json(self.workqueue,self.cache_path)
             else:
@@ -190,23 +167,12 @@ class CheckmarxDriver():
             traceback.print_exc()
             self.driver.quit()
             # self.exec_workqueue(change_to)
-
-
-    # def exec_full_workqueue(self):
-    #     try:
-    #         if self.sso_login(self.workqueue[0]['url']):
-    #             for i in range(0,len(self.workqueue)):
-    #                 if not self.workqueue[i]['isSet']:
-    #                     print('Checking ',i+1 ,'/', len(self.workqueue))
-    #                     if self.set_status(self.workqueue[i]['url'],change_to):
-    #                         self.workqueue[i]['isSet'] = True
-    #                         save_dic_as_json(self.workqueue,self.cache_path)
-    #         else:
-    #             self.driver.quit()
-
+    def print_workqueue(self):
+        try:
+            print(self.workqueue)
+            return True
         except:
-            traceback.print_exc()
-            self.driver.quit()
+            return False
 
     def logout(self):
         self.driver.close()
