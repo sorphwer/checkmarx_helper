@@ -177,13 +177,24 @@ class DBBuilder():
             sheet[index_col+str(i)].value = i-1
 
             #init Row
+
             row = {}
+            is_null_row = False
             for header_index in col_list:
                 row[sheet[header_index+'1'].value] = sheet[header_index+str(i)].value
-            row['SrcFilePath'] = get_file_name(row['SrcFileName'])
-            row['DestFilePath'] = get_file_name(row['DestFileName'])
+            try:
+                row['SrcFilePath'] = get_file_name(row['SrcFileName'])
+                row['DestFilePath'] = get_file_name(row['DestFileName'])
+            except:
+                is_null_row = True
+                
+            # row['DestFilePath']  = ''
+            # row['SrcFilePath'] = ''
+            
             #first init
-            self._update_db(row)
+            if not is_null_row:
+                if row['Result State'] == 'To Verify':
+                    self._update_db(row)
        
         #Second init
         for db_key in list(self.db.keys()):

@@ -109,10 +109,16 @@ class WorkShell(cmd.Cmd):
             print("Cannot set self reference")
             return False
         current_chunk = self._get_current_chunk()
+        comment = ""
+        status = ""
+        for i in current_chunk:
+            if i['#'] == target_id:
+                comment = i['Comment']
+                status = i['Status']
         for i in current_chunk:
             if i['#'] == id:
-                i['Comment'] =f'As the code triggers this issue and the remediation is the same, please refer to #{str(target_id)}'
-                i['Status'] = None
+                i['Comment'] = comment
+                i['Status'] = status
                 i['reference'] = int(target_id)
         return True
                 
@@ -242,6 +248,8 @@ class WorkShell(cmd.Cmd):
             if 'reference' in i:
                 pass
             else:
+                if not i['Comment']:
+                    i['Comment'] = ''
                 if i['Status'] == 'Open':
                     print("\033[32;1m [Open]",end='')
                     print('\033[1;32;43m'+interface_dic[i['#']][0]+'\033[0m',end='')
@@ -457,9 +465,13 @@ class WorkShell(cmd.Cmd):
         for node_key in self.db.keys():
             for chunk_key in self.db[node_key].keys():
                 sublist = self.db[node_key][chunk_key]
+
                 for i in sublist:
                     if  'reference' in i:
+                        #sync status
                         sheet['AB'+str(i['#']+1)].value = sheet['AB'+str(i['reference']+1)].value
+                        #sync comment
+                        # sheet['AF'+str(i['#']+1)].value = sheet['AF'+str(i['reference']+1)].value
                         #override comments col to fix bug
                         reference = str(i['reference'])
                         sheet['AF'+str(i['#']+1)].value = f'As the code triggers this issue and the remediation is the same, please refer to #{reference}'   
